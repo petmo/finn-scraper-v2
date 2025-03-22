@@ -1,0 +1,27 @@
+# finn_scraper/config/config.yaml
+
+base_url: "https://www.finn.no/realestate/homes/search.html?location=0.20061"
+max_page: 50
+scrape_delay_min: 0.5
+scrape_delay_max: 1.5
+database_name: "finn_properties.db"
+csv_export_name: "data/finn_properties2.csv"
+finn_codes_csv_export_name: "data/finn_codes.csv"
+
+# Selectors for scraping property details (from Javascript reference)
+finn_code_selector: 'a.sf-search-ad-link'
+property_details_selectors:
+  title: 'h1.s-text-headline'
+  object_address: 'div.s-text-body'
+  price_section_parent: 'div.space-y-4.mt-4' # Parent for price and details section - CHECK THIS CAREFULLY AFTER RUN
+  prisantydning_relative: 'span.pl-4:nth-child(1)' # First span with class pl-4
+  totalpris_relative: 'span.pl-4:nth-child(2)' # Second span with class pl-4
+  felleskost_mnd_relative: 'span.pl-4:nth-child(3)' # Third span with class pl-4
+  boligtype_relative: 'span.pl-4:nth-child(4)' # Fourth span with class pl-4
+  eierform_relative: 'span.pl-4:nth-child(5)' # Fifth span with class pl-4
+  soverom_relative: 'span.pl-4:nth-child(6)' # Sixth span with class pl-4
+  bruksareal_relative: 'span.pl-4:nth-child(7)' # Seventh span with class pl-4
+  balkong_terrasse_relative: 'span.pl-4:nth-child(8)' # Eighth span with class pl-4
+  rom_relative: 'span.pl-4:nth-child(9)' # Ninth span with class pl-4
+  etasje_relative: 'span.pl-4:nth-child(10)' # Tenth span with class pl-4
+  byggeaar_relative: 'span.pl-4:nth-child(11)' # Eleventh span with class pl-4
