@@ -1,12 +1,33 @@
 # finn_scraper/config/config.yaml
 
+# Scraping configuration
 base_url: "https://www.finn.no/realestate/homes/search.html?location=0.20061"
 max_page: 50
 scrape_delay_min: 0.5
 scrape_delay_max: 1.5
-database_name: "finn_properties.db"
-csv_export_name: "data/finn_properties2.csv"
-finn_codes_csv_export_name: "data/finn_codes.csv"
-
 ad_url: "https://www.finn.no/realestate/homes/ad.html?finnkode={}"
 finn_code_selector: 'a[href*="finnkode="]' # CSS selector to find links containing Finn codes
+
+# Storage configuration
+# Choose between 'sqlite', 'csv', or 'supabase'
+backend: "sqlite"
+
+# SQLite configuration
+sqlite:
+  database_name: "finn_properties.db"
+
+# CSV configuration
+csv:
+  finn_codes_path: "data/finn_codes.csv"
+  properties_path: "data/properties.csv"
+
+# Supabase configuration
+supabase:
+  url: "YOUR_SUPABASE_URL"
+  key: "YOUR_SUPABASE_API_KEY"
+  finn_codes_table: "finn_codes"
+  properties_table: "properties"
+
+# Export paths
+finn_codes_csv_export_name: "data/finn_codes_export.csv"
+csv_export_name: "data/finn_properties_export.csv"
