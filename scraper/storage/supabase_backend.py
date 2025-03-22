@@ -2,6 +2,7 @@ import logging
 from typing import List, Dict, Any, Optional, Union
 import datetime
 import pandas as pd
+import numpy as np
 from supabase import create_client, Client
 
 from scraper.storage.base import StorageBackend
