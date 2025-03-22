@@ -1,7 +1,6 @@
 import logging
 import datetime
 from typing import List, Dict, Any, Set
-from dateutil.parser import parse as parse_date
 from dateutil.relativedelta import relativedelta
 
 from scraper.storage.base import StorageBackend

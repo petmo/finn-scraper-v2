@@ -32,14 +32,13 @@ def generate_status_report(config):
         all_codes = storage.fetch_finn_codes(select_all=True)
 
         scrape_status = {}
-        for code in all_codes:
-            finn_code = code[0]
-            # Extract scrape status (assuming it's the third element)
-            if len(code) > 2:
-                status = code[2]
-                if status not in scrape_status:
-                    scrape_status[status] = 0
-                scrape_status[status] += 1
+        # More robust tuple unpacking
+        for code_tuple in all_codes:
+            finn_code = code_tuple[0]
+            status = code_tuple[2] if len(code_tuple) > 2 else "unknown"
+            if status not in scrape_status:
+                scrape_status[status] = 0
+            scrape_status[status] += 1
 
         # Print report
         print("\n===== FINN CODE STATUS REPORT =====")

@@ -125,6 +125,12 @@ class CSVBackend(StorageBackend):
         if self.finn_codes_df is None:
             self.initialize()
 
+        for item in finn_codes_data:
+            if "listing_status" not in item:
+                item["listing_status"] = "active"
+            if "last_date_checked" not in item:
+                item["last_date_checked"] = item["fetched_at"]
+
         # Create a new DataFrame with the new data
         new_df = pd.DataFrame(finn_codes_data)
 

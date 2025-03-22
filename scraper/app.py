@@ -8,6 +8,7 @@ from typing import Optional, Dict, Any, List
 
 from scraper.config_manager import ConfigManager
 from scraper.logger import setup_logging, get_logger
+from scraper.services.finn_code_manager import FinnCodeManager
 from scraper.storage.factory import create_storage_backend
 from scraper.services.finn_code_service import FinnCodeService
 from scraper.services.property_service import PropertyService
@@ -44,6 +45,7 @@ class FinnScraperApp:
         # Create services
         self.finn_code_service = FinnCodeService(self.config)
         self.property_service = PropertyService(self.config)
+        self.finn_code_manager = FinnCodeManager(self.storage)
 
         logger.info("Finn Scraper application initialized")
 
