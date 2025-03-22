@@ -40,15 +40,21 @@ def create_storage_backend(config: Dict[str, Any]) -> StorageBackend:
         return CSVBackend(finn_codes_path, properties_path)
 
     elif backend_type == "supabase":
+
+        import os
+
         supabase_config = config.get("supabase", {})
-        url = supabase_config.get("url")
-        key = supabase_config.get("key")
+
+        # Try environment variables first, then config file
+        url = os.environ.get("SUPABASE_URL") or supabase_config.get("url")
+        key = os.environ.get("SUPABASE_KEY") or supabase_config.get("key")
 
         if not url or not key:
-            logger.error("Supabase URL and key must be provided in the configuration")
-            raise ValueError(
-                "Supabase URL and key must be provided in the configuration"
+            logger.error(
+                "Supabase URL and key must be provided via environment variables SUPABASE_URL/SUPABASE_KEY or in the configuration"
             )
+
+            raise ValueError("Supabase URL and key must be provided")
 
         finn_codes_table = supabase_config.get("finn_codes_table", "finn_codes")
         properties_table = supabase_config.get("properties_table", "properties")

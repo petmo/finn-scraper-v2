@@ -10,7 +10,7 @@ finn_code_selector: 'a[href*="finnkode="]' # CSS selector to find links containi
 
 # Storage configuration
 # Choose between 'sqlite', 'csv', or 'supabase'
-backend: "sqlite"
+backend: "supabase"
 
 # SQLite configuration
 sqlite:
@@ -18,13 +18,13 @@ sqlite:
 
 # CSV configuration
 csv:
-  finn_codes_path: "data/finn_codes.csv"
-  properties_path: "data/properties.csv"
+  finn_codes_path: "data/finn_codes_v2.csv"
+  properties_path: "data/properties_v2.csv"
 
 # Supabase configuration
 supabase:
-  url: "YOUR_SUPABASE_URL"
-  key: "YOUR_SUPABASE_API_KEY"
+  url: ""
+  key: ""
   finn_codes_table: "finn_codes"
   properties_table: "properties"
 

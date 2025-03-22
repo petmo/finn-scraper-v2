@@ -6,6 +6,8 @@ import time
 import logging
 from typing import Optional, Dict, Any, List
 
+from dotenv import load_dotenv
+
 from scraper.config_manager import ConfigManager
 from scraper.logger import setup_logging, get_logger
 from scraper.services.finn_code_manager import FinnCodeManager
@@ -15,6 +17,7 @@ from scraper.services.property_service import PropertyService
 from scraper.errors import handle_exceptions, ScraperError
 
 logger = get_logger(__name__)
+load_dotenv(dotenv_path=".env")
 
 
 class FinnScraperApp:

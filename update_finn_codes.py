@@ -10,6 +10,7 @@ import sys
 import argparse
 import logging
 import datetime
+from dotenv import load_dotenv
 
 from scraper import utils
 from scraper.storage.factory import create_storage_backend
@@ -17,6 +18,9 @@ from scraper.finn_code_scraper import fetch_finn_codes
 from scraper.services.finn_code_manager import FinnCodeManager
 
 logger = logging.getLogger(__name__)
+
+
+load_dotenv(dotenv_path=".env")
 
 
 def update_active_status(args, config):

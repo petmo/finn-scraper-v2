@@ -345,3 +345,34 @@ class CSVBackend(StorageBackend):
                 f"Error fetching finn codes with status {status} from CSV: {e}"
             )
             return []
+
+    def property_exists(self, finn_code: str) -> bool:
+        """Check if a property exists in the properties CSV."""
+        if self.properties_df is None:
+            self.initialize()
+
+        return finn_code in self.properties_df["finn_code"].values
+
+    def fetch_properties(
+        self, finn_codes: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """Fetch properties from the CSV, optionally filtered by finn codes."""
+        if self.properties_df is None:
+            self.initialize()
+
+        try:
+            if finn_codes:
+                filtered_df = self.properties_df[
+                    self.properties_df["finn_code"].isin(finn_codes)
+                ]
+            else:
+                filtered_df = self.properties_df
+
+            # Convert to list of dictionaries
+            properties = filtered_df.to_dict("records")
+
+            logger.info(f"Fetched {len(properties)} properties from CSV")
+            return properties
+        except Exception as e:
+            logger.error(f"Error fetching properties from CSV: {e}")
+            return []

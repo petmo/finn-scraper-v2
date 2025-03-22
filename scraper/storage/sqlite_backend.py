@@ -338,3 +338,43 @@ class SQLiteBackend(StorageBackend):
                 f"Database error fetching finn codes with status {status}: {e}"
             )
             return []
+
+    def property_exists(self, finn_code: str) -> bool:
+        """Check if a property exists in the properties table."""
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT 1 FROM properties WHERE finn_code = ?", (finn_code,))
+            return cursor.fetchone() is not None
+        except sqlite3.Error as e:
+            logger.error(f"Database error checking property existence: {e}")
+            return False
+
+    def fetch_properties(
+        self, finn_codes: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """Fetch properties from the database, optionally filtered by finn codes."""
+        try:
+            cursor = self.conn.cursor()
+
+            if finn_codes:
+                # Create placeholders for IN clause
+                placeholders = ", ".join(["?"] * len(finn_codes))
+                query = f"SELECT * FROM properties WHERE finn_code IN ({placeholders})"
+                cursor.execute(query, finn_codes)
+            else:
+                cursor.execute("SELECT * FROM properties")
+
+            # Get column names
+            columns = [desc[0] for desc in cursor.description]
+
+            # Convert rows to dictionaries
+            properties = []
+            for row in cursor.fetchall():
+                property_dict = dict(zip(columns, row))
+                properties.append(property_dict)
+
+            logger.info(f"Fetched {len(properties)} properties from database")
+            return properties
+        except sqlite3.Error as e:
+            logger.error(f"Database error fetching properties: {e}")
+            return []

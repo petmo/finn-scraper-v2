@@ -1,5 +1,6 @@
 import logging
 from typing import List, Dict, Any, Optional, Union
+import datetime
 import pandas as pd
 from supabase import create_client, Client
 
@@ -125,20 +126,74 @@ class SupabaseBackend(StorageBackend):
             return []
 
     def save_property_data(self, property_data: Dict[str, Any]) -> None:
-        """Save property data to Supabase."""
+        """Save property data to Supabase with proper type conversions."""
         if self.client is None:
             self.initialize()
 
         try:
+            # Create a copy to avoid modifying original
+            data = property_data.copy()
+
             # Ensure scrape_status is set if not provided
-            if "scrape_status" not in property_data:
-                property_data["scrape_status"] = "success"
+            if "scrape_status" not in data:
+                data["scrape_status"] = "success"
+
+            # Convert numeric fields
+            numeric_fields = [
+                "asking_price",
+                "total_price",
+                "costs",
+                "joint_debt",
+                "monthly_fee",
+                "bedrooms",
+                "internal_area",
+                "usable_area",
+                "external_usable_area",
+                "floor",
+                "build_year",
+                "rooms",
+            ]
+
+            for field in numeric_fields:
+                if field in data:
+                    # Convert np.nan to None (will become NULL in database)
+                    if isinstance(data[field], float) and np.isnan(data[field]):
+                        data[field] = None
+                    elif data[field] is not None:
+                        # Try to convert string to numeric if it's a string
+                        if isinstance(data[field], str):
+                            try:
+                                data[field] = float(data[field])
+                            except ValueError:
+                                # Keep as string if conversion fails
+                                pass
+
+            # Handle latitude/longitude
+            if "latitude" in data and data["latitude"] is not None:
+                try:
+                    data["latitude"] = float(data["latitude"])
+                except (ValueError, TypeError):
+                    data["latitude"] = None
+
+            if "longitude" in data and data["longitude"] is not None:
+                try:
+                    data["longitude"] = float(data["longitude"])
+                except (ValueError, TypeError):
+                    data["longitude"] = None
+
+            # Convert timestamp fields
+            timestamp_fields = ["last_date_checked"]
+            for field in timestamp_fields:
+                if field in data and data[field] is not None:
+                    # Ensure it's in ISO format for PostgreSQL
+                    if isinstance(data[field], datetime.datetime):
+                        data[field] = data[field].isoformat()
 
             # Upsert the property data
-            self.client.table(self.properties_table).upsert(property_data).execute()
+            self.client.table(self.properties_table).upsert(data).execute()
 
             logger.info(
-                f"Saved property data for finn code {property_data.get('finn_code')} to Supabase"
+                f"Saved property data for finn code {data.get('finn_code')} to Supabase"
             )
         except Exception as e:
             logger.error(f"Error saving property data to Supabase: {e}")
@@ -210,7 +265,7 @@ class SupabaseBackend(StorageBackend):
             logger.error(f"Error updating finn code status in Supabase: {e}")
 
     def update_finn_code_status_fields(self, finn_code: str, **kwargs) -> None:
-        """Updates multiple status fields of a finn_code in Supabase."""
+        """Updates multiple status fields of a finn_code in Supabase with type conversion."""
         if self.client is None:
             self.initialize()
 
@@ -218,7 +273,13 @@ class SupabaseBackend(StorageBackend):
             return
 
         try:
-            self.client.table(self.finn_codes_table).update(kwargs).eq(
+            # Convert timestamp fields if present
+            data = kwargs.copy()
+            if "last_date_checked" in data and data["last_date_checked"] is not None:
+                if isinstance(data["last_date_checked"], datetime.datetime):
+                    data["last_date_checked"] = data["last_date_checked"].isoformat()
+
+            self.client.table(self.finn_codes_table).update(data).eq(
                 "finn_code", finn_code
             ).execute()
             logger.info(f"Updated status fields for Finn code {finn_code}: {kwargs}")
@@ -261,4 +322,43 @@ class SupabaseBackend(StorageBackend):
             logger.error(
                 f"Error fetching finn codes with status {status} from Supabase: {e}"
             )
+            return []
+
+    def property_exists(self, finn_code: str) -> bool:
+        """Check if a property exists in the properties table."""
+        if self.client is None:
+            self.initialize()
+
+        try:
+            response = (
+                self.client.table(self.properties_table)
+                .select("finn_code")
+                .eq("finn_code", finn_code)
+                .execute()
+            )
+            return len(response.data) > 0
+        except Exception as e:
+            logger.error(f"Error checking property existence in Supabase: {e}")
+            return False
+
+    def fetch_properties(
+        self, finn_codes: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """Fetch properties from Supabase, optionally filtered by finn codes."""
+        if self.client is None:
+            self.initialize()
+
+        try:
+            query = self.client.table(self.properties_table).select("*")
+
+            if finn_codes:
+                # Supabase syntax for IN clause uses .in() method
+                query = query.in_("finn_code", finn_codes)
+
+            response = query.execute()
+
+            logger.info(f"Fetched {len(response.data)} properties from Supabase")
+            return response.data
+        except Exception as e:
+            logger.error(f"Error fetching properties from Supabase: {e}")
             return []

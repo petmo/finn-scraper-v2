@@ -62,3 +62,15 @@ class StorageBackend(ABC):
     def fetch_finn_codes_with_status(self, status: str = None) -> List[tuple]:
         """Fetch finn codes with a specific listing status (active/inactive)"""
         pass
+
+    @abstractmethod
+    def property_exists(self, finn_code: str) -> bool:
+        """Check if a property exists in the properties table"""
+        pass
+
+    @abstractmethod
+    def fetch_properties(
+        self, finn_codes: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """Fetch properties from storage, optionally filtered by finn codes"""
+        pass
