@@ -1,5 +1,8 @@
 #!/bin/bash
-set -e
+set -ex  # Enable debugging and exit on error
+
+# Force unbuffered output
+export PYTHONUNBUFFERED=1
 
 echo "Starting Finn.no scraper sequence at $(date)"
 
