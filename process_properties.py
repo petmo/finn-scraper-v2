@@ -46,7 +46,8 @@ def process_properties(args, config):
         logger.info(f"  Processed: {stats['processed']}")
         logger.info(f"  Success: {stats['success']}")
         logger.info(f"  Error: {stats['error']}")
-        logger.info(f"  Skipped: {stats['skipped']}")
+        logger.info(f"  Skipped (inactive): {stats['skipped']}")
+        logger.info(f"  Skipped (24h rule): {stats.get('skipped_24h', 0)}")
 
         # Print more readable stats to the console
         print("\n===== Property Processing Results =====")
@@ -56,6 +57,7 @@ def process_properties(args, config):
         print(f"Successfully Processed: {stats['success']}")
         print(f"Errors: {stats['error']}")
         print(f"Skipped (inactive): {stats['skipped']}")
+        print(f"Skipped (24h rule): {stats.get('skipped_24h', 0)}")
         print("=====================================\n")
 
     finally:

@@ -31,6 +31,7 @@ class PropertyManager:
     ) -> Tuple[bool, Optional[str]]:
         """
         Process property information for a single finn code.
+        Only scrapes if property doesn't exist or it's been 24+ hours since last scrape.
 
         Args:
             finn_code: The finn code to process
@@ -42,13 +43,45 @@ class PropertyManager:
         try:
             # Check if property exists
             property_exists = self.check_property_exists(finn_code)
+            should_scrape = True
 
             # If inactive, we can skip processing
             if not is_active and property_exists:
                 return True, "Skipped inactive property"
 
-            # Scrape property if it doesn't exist or is active
-            if not property_exists or is_active:
+            # Check last scrape time if property exists
+            if property_exists:
+                property_data = self.get_property_data(finn_code)
+                if property_data and "last_date_checked" in property_data:
+                    last_checked = property_data["last_date_checked"]
+                    if last_checked:
+                        try:
+                            # Parse the timestamp
+                            if isinstance(last_checked, str):
+                                last_checked_date = datetime.datetime.fromisoformat(
+                                    last_checked.replace("Z", "+00:00")
+                                )
+                            else:
+                                last_checked_date = last_checked
+
+                            # Calculate time difference
+                            now = datetime.datetime.now()
+                            time_diff = now - last_checked_date
+
+                            # Skip if less than 24 hours
+                            if time_diff.total_seconds() < 24 * 3600:
+                                should_scrape = False
+                                return (
+                                    True,
+                                    "Skipped - less than 24 hours since last scrape",
+                                )
+                        except Exception as e:
+                            logger.warning(
+                                f"Error parsing last_date_checked for {finn_code}: {e}"
+                            )
+
+            # Scrape property if needed
+            if should_scrape:
                 property_data = self.property_service.scrape_property(finn_code)
 
                 if not property_data:
@@ -61,7 +94,7 @@ class PropertyManager:
                 # Add timestamp
                 property_data["last_date_checked"] = datetime.datetime.now().isoformat()
 
-                # Check if property is inactive using dummy function for now
+                # Check if property is inactive
                 is_inactive = self.check_property_inactive(property_data)
 
                 if is_inactive:
@@ -92,6 +125,25 @@ class PropertyManager:
             logger.error(f"Error processing property for finn code {finn_code}: {e}")
             self.storage.update_finn_code_status(finn_code, "error")
             return False, f"Error: {str(e)}"
+
+    def get_property_data(self, finn_code: str) -> Optional[Dict[str, Any]]:
+        """
+        Get property data for a specific finn code.
+
+        Args:
+            finn_code: Finn code to get data for
+
+        Returns:
+            Property data dictionary or None
+        """
+        try:
+            properties = self.storage.fetch_properties(finn_codes=[finn_code])
+            if properties and len(properties) > 0:
+                return properties[0]
+            return None
+        except Exception as e:
+            logger.error(f"Error getting property data for {finn_code}: {e}")
+            return None
 
     def check_property_exists(self, finn_code: str) -> bool:
         """
@@ -170,6 +222,7 @@ class PropertyManager:
             "success": 0,
             "error": 0,
             "skipped": 0,
+            "skipped_24h": 0,
         }
 
         for i, code_data in enumerate(all_finn_codes):
@@ -198,6 +251,14 @@ class PropertyManager:
             )
 
             success, message = self.process_property_for_finn_code(finn_code, is_active)
+
+            if message == "Skipped - less than 24 hours since last scrape":
+                stats["skipped_24h"] += 1
+                logger.info(
+                    f"Skipping {finn_code} - less than 24 hours since last scrape"
+                )
+                continue
+
             stats["processed"] += 1
 
             if success:
